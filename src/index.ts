@@ -5,7 +5,6 @@ import { IncomingMessage, ServerResponse } from 'http';
 
 const hostname = '127.0.0.1';
 const port = 3000;
-const pagesDirectory = path.join(__dirname, 'pages');
 
 const server = http.createServer(
   (req: IncomingMessage, res: ServerResponse) => {
@@ -15,16 +14,22 @@ const server = http.createServer(
       return;
     }
 
-    let filePath = path.join(
-      pagesDirectory,
-      req.url === '/' ? 'index' : req.url
-    );
-    filePath = filePath.concat('.html');
+    let url = req.url === '/' ? 'index' : req.url;
+    let filePath = '';
+    let contentType = '';
+
+    if (url.endsWith('.css')) {
+      filePath = path.join(__dirname, url);
+      contentType = 'text/css';
+    } else {
+      filePath = path.join(__dirname, 'pages', url + '.html');
+      contentType = 'text/html';
+    }
 
     fs.readFile(filePath, 'utf-8', (error, content) => {
       // Display 404 page if the html file is not found
       if (error) {
-        const path404 = path.join(pagesDirectory, '404.html');
+        const path404 = path.join(__dirname, 'pages', '404.html');
         fs.readFile(path404, 'utf-8', (error, content) => {
           res.writeHead(404, { 'Content-Type': 'text/html' });
           res.end(content);
@@ -33,7 +38,7 @@ const server = http.createServer(
       }
 
       // Display the html contents
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { 'Content-Type': contentType });
       res.end(content);
     });
   }
